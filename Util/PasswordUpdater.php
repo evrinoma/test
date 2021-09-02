@@ -12,10 +12,9 @@
 namespace FOS\UserBundle\Util;
 
 use FOS\UserBundle\Model\UserInterface;
-use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\PasswordHasher\LegacyPasswordHasherInterface;
-use Symfony\Component\Security\Core\User\LegacyPasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\Encoder\BCryptPasswordEncoder;
+use Symfony\Component\Security\Core\Encoder\EncoderFactoryInterface;
+use Symfony\Component\Security\Core\Encoder\SelfSaltingEncoderInterface;
 
 /**
  * Class updating the hashed password in the user when there is a new password.
@@ -24,41 +23,32 @@ use Symfony\Component\Security\Core\User\LegacyPasswordAuthenticatedUserInterfac
  */
 class PasswordUpdater implements PasswordUpdaterInterface
 {
-    private $hasherFactory;
+    private $encoderFactory;
 
-    public function __construct(PasswordHasherFactoryInterface $hasherFactory)
+    public function __construct(EncoderFactoryInterface $encoderFactory)
     {
-        $this->hasherFactory = $hasherFactory;
+        $this->encoderFactory = $encoderFactory;
     }
 
     public function hashPassword(UserInterface $user)
     {
         $plainPassword = $user->getPlainPassword();
 
-        if ($plainPassword === '') {
+        if (0 === strlen($plainPassword)) {
             return;
         }
 
-        $salt = null;
-        if ($user instanceof LegacyPasswordAuthenticatedUserInterface) {
-            $salt = rtrim(str_replace('+', '.', base64_encode(random_bytes(32))), '=');
-        }
+        $encoder = $this->encoderFactory->getEncoder($user);
 
-        $user->setSalt($salt);
-
-        $hasher = $this->hasherFactory->getPasswordHasher(get_class($user));
-
-        if ($hasher instanceof UserPasswordHasherInterface) {
-            $hash = $hasher->hashPassword($user, $plainPassword);
+        if ($encoder instanceof BCryptPasswordEncoder || $encoder instanceof SelfSaltingEncoderInterface) {
+            $user->setSalt(null);
         } else {
-            if ($hasher instanceof LegacyPasswordHasherInterface) {
-                $hash = $hasher->hash($plainPassword, $user->getSalt());
-            } else {
-                $hash = $hasher->hash($plainPassword);
-            }
+            $salt = rtrim(str_replace('+', '.', base64_encode(random_bytes(32))), '=');
+            $user->setSalt($salt);
         }
 
-        $user->setPassword($hash);
+        $hashedPassword = $encoder->encodePassword($plainPassword, $user->getSalt());
+        $user->setPassword($hashedPassword);
         $user->eraseCredentials();
     }
 }

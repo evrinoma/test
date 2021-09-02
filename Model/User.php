@@ -11,8 +11,7 @@
 
 namespace FOS\UserBundle\Model;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Security\Core\User\EquatableInterface;
 use Symfony\Component\Security\Core\User\UserInterface as BaseUserInterface;
 
 /**
@@ -21,7 +20,7 @@ use Symfony\Component\Security\Core\User\UserInterface as BaseUserInterface;
  * @author Thibault Duplessis <thibault.duplessis@gmail.com>
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-abstract class User implements UserInterface, GroupableInterface
+abstract class User implements UserInterface, EquatableInterface, \Serializable
 {
     /**
      * @var mixed
@@ -70,7 +69,7 @@ abstract class User implements UserInterface, GroupableInterface
     /**
      * Plain password. Used for model validation. Must not be persisted.
      *
-     * @var string
+     * @var string|null
      */
     protected $plainPassword;
 
@@ -90,11 +89,6 @@ abstract class User implements UserInterface, GroupableInterface
      * @var \DateTime|null
      */
     protected $passwordRequestedAt;
-
-    /**
-     * @var GroupInterface[]|Collection
-     */
-    protected $groups;
 
     /**
      * @var array
@@ -118,29 +112,9 @@ abstract class User implements UserInterface, GroupableInterface
         return (string) $this->getUsername();
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function addRole($role)
+    public function __serialize(): array
     {
-        $role = strtoupper($role);
-        if ($role === static::ROLE_DEFAULT) {
-            return $this;
-        }
-
-        if (!in_array($role, $this->roles, true)) {
-            $this->roles[] = $role;
-        }
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function serialize()
-    {
-        return serialize([
+        return [
             $this->password,
             $this->salt,
             $this->usernameCanonical,
@@ -149,16 +123,11 @@ abstract class User implements UserInterface, GroupableInterface
             $this->id,
             $this->email,
             $this->emailCanonical,
-        ]);
+        ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function unserialize($serialized)
+    public function __unserialize(array $data): void
     {
-        $data = unserialize($serialized);
-
         if (13 === count($data)) {
             // Unserializing a User object from 1.3.x
             unset($data[4], $data[5], $data[6], $data[9], $data[10]);
@@ -178,7 +147,40 @@ abstract class User implements UserInterface, GroupableInterface
             $this->id,
             $this->email,
             $this->emailCanonical
-        ) = $data;
+            ) = $data;
+    }
+
+    /**
+     * @internal
+     */
+    final public function serialize()
+    {
+        return serialize($this->__serialize());
+    }
+
+    /**
+     * @internal
+     */
+    final public function unserialize($serialized)
+    {
+        $this->__unserialize(unserialize($serialized));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addRole($role)
+    {
+        $role = strtoupper($role);
+        if ($role === static::ROLE_DEFAULT) {
+            return $this;
+        }
+
+        if (!in_array($role, $this->roles, true)) {
+            $this->roles[] = $role;
+        }
+
+        return $this;
     }
 
     /**
@@ -278,10 +280,6 @@ abstract class User implements UserInterface, GroupableInterface
     {
         $roles = $this->roles;
 
-        foreach ($this->getGroups() as $group) {
-            $roles = array_merge($roles, $group->getRoles());
-        }
-
         // we need to make sure to have at least one role
         $roles[] = static::ROLE_DEFAULT;
 
@@ -294,30 +292,6 @@ abstract class User implements UserInterface, GroupableInterface
     public function hasRole($role)
     {
         return in_array(strtoupper($role), $this->getRoles(), true);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isAccountNonExpired()
-    {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isAccountNonLocked()
-    {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isCredentialsNonExpired()
-    {
-        return true;
     }
 
     public function isEnabled()
@@ -498,59 +472,6 @@ abstract class User implements UserInterface, GroupableInterface
 
         foreach ($roles as $role) {
             $this->addRole($role);
-        }
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getGroups()
-    {
-        return $this->groups ?: $this->groups = new ArrayCollection();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getGroupNames()
-    {
-        $names = [];
-        foreach ($this->getGroups() as $group) {
-            $names[] = $group->getName();
-        }
-
-        return $names;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function hasGroup($name)
-    {
-        return in_array($name, $this->getGroupNames());
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addGroup(GroupInterface $group)
-    {
-        if (!$this->getGroups()->contains($group)) {
-            $this->getGroups()->add($group);
-        }
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function removeGroup(GroupInterface $group)
-    {
-        if ($this->getGroups()->contains($group)) {
-            $this->getGroups()->removeElement($group);
         }
 
         return $this;

@@ -11,6 +11,7 @@
 
 namespace FOS\UserBundle\Controller;
 
+use FOS\UserBundle\CompatibilityUtil;
 use FOS\UserBundle\Event\FilterUserResponseEvent;
 use FOS\UserBundle\Event\FormEvent;
 use FOS\UserBundle\Event\GetResponseUserEvent;
@@ -19,13 +20,13 @@ use FOS\UserBundle\FOSUserEvents;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Controller managing the registration.
@@ -42,12 +43,9 @@ class RegistrationController extends AbstractController
     private $userManager;
     private $tokenStorage;
 
-    /**
-     * RegistrationController constructor.
-     */
     public function __construct(EventDispatcherInterface $eventDispatcher, FactoryInterface $formFactory, UserManagerInterface $userManager, TokenStorageInterface $tokenStorage)
     {
-        $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher = CompatibilityUtil::upgradeEventDispatcher($eventDispatcher);
         $this->formFactory = $formFactory;
         $this->userManager = $userManager;
         $this->tokenStorage = $tokenStorage;
@@ -105,8 +103,6 @@ class RegistrationController extends AbstractController
 
     /**
      * Tell the user to check their email provider.
-     *
-     * @return RedirectResponse|Response
      */
     public function checkEmailAction(Request $request)
     {
@@ -165,8 +161,6 @@ class RegistrationController extends AbstractController
 
     /**
      * Tell the user his account is now confirmed.
-     *
-     * @return Response
      */
     public function confirmedAction(Request $request)
     {

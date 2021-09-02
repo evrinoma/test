@@ -11,14 +11,19 @@
 
 namespace FOS\UserBundle\EventListener;
 
+use FOS\UserBundle\CompatibilityUtil;
 use FOS\UserBundle\Event\FilterUserResponseEvent;
 use FOS\UserBundle\Event\UserEvent;
 use FOS\UserBundle\FOSUserEvents;
 use FOS\UserBundle\Security\LoginManagerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Core\Exception\AccountStatusException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * @internal
+ * @final
+ */
 class AuthenticationListener implements EventSubscriberInterface
 {
     /**
@@ -59,6 +64,7 @@ class AuthenticationListener implements EventSubscriberInterface
      */
     public function authenticate(FilterUserResponseEvent $event, $eventName, EventDispatcherInterface $eventDispatcher)
     {
+        $eventDispatcher = CompatibilityUtil::upgradeEventDispatcher($eventDispatcher);
         try {
             $this->loginManager->logInUser($this->firewallName, $event->getUser(), $event->getResponse());
 

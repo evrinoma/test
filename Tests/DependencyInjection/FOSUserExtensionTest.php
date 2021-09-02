@@ -30,6 +30,7 @@ class FOSUserExtensionTest extends TestCase
     public function testUserLoadThrowsExceptionUnlessDatabaseDriverSet()
     {
         $this->expectException(InvalidConfigurationException::class);
+
         $loader = new FOSUserExtension();
         $config = $this->getEmptyConfig();
         unset($config['db_driver']);
@@ -39,6 +40,7 @@ class FOSUserExtensionTest extends TestCase
     public function testUserLoadThrowsExceptionUnlessDatabaseDriverIsValid()
     {
         $this->expectException(InvalidConfigurationException::class);
+
         $loader = new FOSUserExtension();
         $config = $this->getEmptyConfig();
         $config['db_driver'] = 'foo';
@@ -48,24 +50,17 @@ class FOSUserExtensionTest extends TestCase
     public function testUserLoadThrowsExceptionUnlessFirewallNameSet()
     {
         $this->expectException(InvalidConfigurationException::class);
+
         $loader = new FOSUserExtension();
         $config = $this->getEmptyConfig();
         unset($config['firewall_name']);
         $loader->load([$config], new ContainerBuilder());
     }
 
-    public function testUserLoadThrowsExceptionUnlessGroupModelClassSet()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $loader = new FOSUserExtension();
-        $config = $this->getFullConfig();
-        unset($config['group']['group_class']);
-        $loader->load([$config], new ContainerBuilder());
-    }
-
     public function testUserLoadThrowsExceptionUnlessUserModelClassSet()
     {
         $this->expectException(InvalidConfigurationException::class);
+
         $loader = new FOSUserExtension();
         $config = $this->getEmptyConfig();
         unset($config['user_class']);
@@ -75,6 +70,7 @@ class FOSUserExtensionTest extends TestCase
     public function testCustomDriverWithoutManager()
     {
         $this->expectException(InvalidConfigurationException::class);
+
         $loader = new FOSUserExtension();
         $config = $this->getEmptyConfig();
         $config['db_driver'] = 'custom';
@@ -106,7 +102,7 @@ class FOSUserExtensionTest extends TestCase
 
         $mailer = $this->configuration->getDefinition('fos_user.mailer.default');
         $parameters = $this->configuration->getParameterBag()->resolveValue(
-            $mailer->getArgument(2)
+            $mailer->getArgument(3)
         );
         $this->assertSame(
             [
@@ -128,7 +124,7 @@ class FOSUserExtensionTest extends TestCase
 
         $mailer = $this->configuration->getDefinition('fos_user.mailer.default');
         $parameters = $this->configuration->getParameterBag()->resolveValue(
-            $mailer->getArgument(2)
+            $mailer->getArgument(3)
         );
         $this->assertSame(
             [
@@ -227,7 +223,6 @@ class FOSUserExtensionTest extends TestCase
         $this->assertParameter('mongodb', 'fos_user.storage');
         $this->assertParameter(null, 'fos_user.model_manager_name');
         $this->assertAlias('fos_user.user_manager.default', 'fos_user.user_manager');
-        $this->assertNotHasDefinition('fos_user.group_manager');
     }
 
     public function testUserLoadManagerClass()
@@ -237,7 +232,6 @@ class FOSUserExtensionTest extends TestCase
         $this->assertParameter('orm', 'fos_user.storage');
         $this->assertParameter('custom', 'fos_user.model_manager_name');
         $this->assertAlias('acme_my.user_manager', 'fos_user.user_manager');
-        $this->assertAlias('fos_user.group_manager.default', 'fos_user.group_manager');
     }
 
     public function testUserLoadFormClass()
@@ -246,7 +240,6 @@ class FOSUserExtensionTest extends TestCase
 
         $this->assertParameter('acme_my_profile', 'fos_user.profile.form.type');
         $this->assertParameter('acme_my_registration', 'fos_user.registration.form.type');
-        $this->assertParameter('acme_my_group', 'fos_user.group.form.type');
         $this->assertParameter('acme_my_change_password', 'fos_user.change_password.form.type');
         $this->assertParameter('acme_my_resetting', 'fos_user.resetting.form.type');
     }
@@ -267,7 +260,6 @@ class FOSUserExtensionTest extends TestCase
 
         $this->assertParameter('acme_profile_form', 'fos_user.profile.form.name');
         $this->assertParameter('acme_registration_form', 'fos_user.registration.form.name');
-        $this->assertParameter('acme_group_form', 'fos_user.group.form.name');
         $this->assertParameter('acme_change_password_form', 'fos_user.change_password.form.name');
         $this->assertParameter('acme_resetting_form', 'fos_user.resetting.form.name');
     }
@@ -278,7 +270,6 @@ class FOSUserExtensionTest extends TestCase
 
         $this->assertHasDefinition('fos_user.profile.form.factory');
         $this->assertHasDefinition('fos_user.registration.form.factory');
-        $this->assertNotHasDefinition('fos_user.group.form.factory');
         $this->assertHasDefinition('fos_user.change_password.form.factory');
         $this->assertHasDefinition('fos_user.resetting.form.factory');
     }
@@ -289,7 +280,6 @@ class FOSUserExtensionTest extends TestCase
 
         $this->assertHasDefinition('fos_user.profile.form.factory');
         $this->assertHasDefinition('fos_user.registration.form.factory');
-        $this->assertHasDefinition('fos_user.group.form.factory');
         $this->assertHasDefinition('fos_user.change_password.form.factory');
         $this->assertHasDefinition('fos_user.resetting.form.factory');
     }
@@ -332,7 +322,6 @@ class FOSUserExtensionTest extends TestCase
         $this->createFullConfiguration();
 
         $this->assertAlias('acme_my.mailer', 'fos_user.mailer');
-        $this->assertAlias('acme_my.templating', 'fos_user.templating');
         $this->assertAlias('acme_my.email_canonicalizer', 'fos_user.util.email_canonicalizer');
         $this->assertAlias('acme_my.username_canonicalizer', 'fos_user.util.username_canonicalizer');
     }
@@ -369,16 +358,11 @@ class FOSUserExtensionTest extends TestCase
 
         $this->assertAlias($doctrineService, 'fos_user.doctrine_registry');
 
-        if (method_exists($definition, 'getFactory')) {
-            $factory = $definition->getFactory();
+        $factory = $definition->getFactory();
 
-            $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $factory[0]);
-            $this->assertSame('fos_user.doctrine_registry', (string) $factory[0]);
-            $this->assertSame('getManager', $factory[1]);
-        } else {
-            $this->assertSame('fos_user.doctrine_registry', $definition->getFactoryService());
-            $this->assertSame('getManager', $definition->getFactoryMethod());
-        }
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $factory[0]);
+        $this->assertSame('fos_user.doctrine_registry', (string) $factory[0]);
+        $this->assertSame('getManager', $factory[1]);
     }
 
     /**
@@ -484,13 +468,6 @@ service:
     email_canonicalizer: acme_my.email_canonicalizer
     username_canonicalizer: acme_my.username_canonicalizer
     user_manager: acme_my.user_manager
-    templating: acme_my.templating
-group:
-    group_class: Acme\MyBundle\Entity\Group
-    form:
-        type: acme_my_group
-        name: acme_group_form
-        validation_groups: [acme_group]
 EOF;
         $parser = new Parser();
 

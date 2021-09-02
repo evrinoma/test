@@ -20,6 +20,9 @@ use Symfony\Component\Console\Question\Question;
 
 /**
  * @author Antoine Hérault <antoine.herault@gmail.com>
+ *
+ * @internal
+ * @final
  */
 class ActivateUserCommand extends Command
 {
@@ -56,7 +59,7 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $username = $input->getArgument('username');
 

@@ -41,9 +41,9 @@ class ActivateUserCommandTest extends TestCase
             ->setMethods(['ask'])
             ->getMock();
 
-        $helper->expects($this->atLeastOnce())
+        $helper
             ->method('ask')
-            ->willReturn('user');
+            ->will($this->returnValue('user'));
 
         $application->getHelperSet()->set($helper, 'question');
 
@@ -82,7 +82,7 @@ class ActivateUserCommandTest extends TestCase
      */
     private function getManipulator($username)
     {
-        $manipulator = $this->getMockBuilder(UserManipulator::class)
+        $manipulator = $this->getMockBuilder('FOS\UserBundle\Util\UserManipulator')
             ->disableOriginalConstructor()
             ->getMock();
 

@@ -146,7 +146,10 @@ class UserManagerTest extends TestCase
 
         $this->manager->expects($this->exactly(2))
             ->method('findUserBy')
-            ->withConsecutive([$this->equalTo(['emailCanonical' => $usernameThatLooksLikeEmail])], [$this->equalTo(['usernameCanonical' => $usernameThatLooksLikeEmail])])
+            ->withConsecutive(
+                [$this->equalTo(['emailCanonical' => $usernameThatLooksLikeEmail])],
+                [$this->equalTo(['usernameCanonical' => $usernameThatLooksLikeEmail])]
+            )
             ->willReturnOnConsecutiveCalls(null, $user);
 
         $this->fieldsUpdater->expects($this->once())

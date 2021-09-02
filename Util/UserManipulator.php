@@ -11,19 +11,23 @@
 
 namespace FOS\UserBundle\Util;
 
+use FOS\UserBundle\CompatibilityUtil;
 use FOS\UserBundle\Event\UserEvent;
 use FOS\UserBundle\FOSUserEvents;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Executes some manipulations on the users.
  *
  * @author Christophe Coevoet <stof@notk.org>
  * @author Luis Cordova <cordoval@gmail.com>
+ *
+ * @internal
+ * @final
  */
 class UserManipulator
 {
@@ -50,7 +54,7 @@ class UserManipulator
     public function __construct(UserManagerInterface $userManager, EventDispatcherInterface $dispatcher, RequestStack $requestStack)
     {
         $this->userManager = $userManager;
-        $this->dispatcher = $dispatcher;
+        $this->dispatcher = CompatibilityUtil::upgradeEventDispatcher($dispatcher);
         $this->requestStack = $requestStack;
     }
 

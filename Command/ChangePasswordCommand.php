@@ -18,6 +18,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
+/**
+ * @internal
+ * @final
+ */
 class ChangePasswordCommand extends Command
 {
     protected static $defaultName = 'fos:user:change-password';
@@ -61,7 +65,7 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $username = $input->getArgument('username');
         $password = $input->getArgument('password');

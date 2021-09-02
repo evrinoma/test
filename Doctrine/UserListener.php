@@ -14,8 +14,8 @@ namespace FOS\UserBundle\Doctrine;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ODM\MongoDB\DocumentManager;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
+use Doctrine\Persistence\ObjectManager;
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Util\CanonicalFieldsUpdater;
 use FOS\UserBundle\Util\PasswordUpdaterInterface;
@@ -25,6 +25,9 @@ use FOS\UserBundle\Util\PasswordUpdaterInterface;
  *
  * @author Christophe Coevoet <stof@notk.org>
  * @author David Buchmann <mail@davidbu.ch>
+ *
+ * @internal
+ * @final
  */
 class UserListener implements EventSubscriber
 {
@@ -83,11 +86,11 @@ class UserListener implements EventSubscriber
     /**
      * Recomputes change set for Doctrine implementations not doing it automatically after the event.
      */
-    private function recomputeChangeSet(EntityManagerInterface $om, UserInterface $user)
+    private function recomputeChangeSet(ObjectManager $om, UserInterface $user)
     {
         $meta = $om->getClassMetadata(get_class($user));
 
-        if ($om instanceof EntityManagerInterface) {
+        if ($om instanceof EntityManager) {
             $om->getUnitOfWork()->recomputeSingleEntityChangeSet($meta, $user);
 
             return;

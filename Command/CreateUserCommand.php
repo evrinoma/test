@@ -23,6 +23,9 @@ use Symfony\Component\Console\Question\Question;
  * @author Matthieu Bontemps <matthieu@knplabs.com>
  * @author Thibault Duplessis <thibault.duplessis@gmail.com>
  * @author Luis Cordova <cordoval@gmail.com>
+ *
+ * @internal
+ * @final
  */
 class CreateUserCommand extends Command
 {
@@ -78,7 +81,7 @@ EOT
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $username = $input->getArgument('username');
         $email = $input->getArgument('email');

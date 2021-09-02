@@ -18,21 +18,34 @@ use Twig\Environment;
 /**
  * @author Christophe Coevoet <stof@notk.org>
  */
-class TwigSwiftMailer extends AbstractMailer
+class TwigSwiftMailer implements MailerInterface
 {
+    /**
+     * @var \Swift_Mailer
+     */
+    protected $mailer;
+
+    /**
+     * @var UrlGeneratorInterface
+     */
+    protected $router;
+
     /**
      * @var Environment
      */
     protected $twig;
 
     /**
-     * TwigSwiftMailer constructor.
+     * @var array
      */
-    public function __construct(\Swift_Mailer $mailer, UrlGeneratorInterface $router, array $parameters, Environment $twig)
-    {
-        $this->twig = $twig;
+    protected $parameters;
 
-        parent::__construct($mailer, $router, $parameters);
+    public function __construct(\Swift_Mailer $mailer, UrlGeneratorInterface $router, Environment $twig, array $parameters)
+    {
+        $this->mailer = $mailer;
+        $this->router = $router;
+        $this->twig = $twig;
+        $this->parameters = $parameters;
     }
 
     /**
@@ -48,7 +61,7 @@ class TwigSwiftMailer extends AbstractMailer
             'confirmationUrl' => $url,
         ];
 
-        $this->sendMessage($this->parameters['from_email']['confirmation'], (string) $user->getEmail(), $template, $context);
+        $this->sendMessage($template, $context, $this->parameters['from_email']['confirmation'], (string) $user->getEmail());
     }
 
     /**
@@ -64,22 +77,25 @@ class TwigSwiftMailer extends AbstractMailer
             'confirmationUrl' => $url,
         ];
 
-        $this->sendMessage($this->parameters['from_email']['resetting'], (string) $user->getEmail(), $template, $context);
+        $this->sendMessage($template, $context, $this->parameters['from_email']['resetting'], (string) $user->getEmail());
     }
 
     /**
-     * {@inheritDoc}
+     * @param string $templateName
+     * @param array  $context
+     * @param array  $fromEmail
+     * @param string $toEmail
      */
-    protected function sendMessage($fromEmail, $toEmail, $template, $context = [])
+    protected function sendMessage($templateName, $context, $fromEmail, $toEmail)
     {
-        $twigTemplate = $this->twig->load($template);
-        $subject = $twigTemplate->renderBlock('subject', $context);
-        $textBody = $twigTemplate->renderBlock('body_text', $context);
+        $template = $this->twig->load($templateName);
+        $subject = $template->renderBlock('subject', $context);
+        $textBody = $template->renderBlock('body_text', $context);
 
         $htmlBody = '';
 
-        if ($twigTemplate->hasBlock('body_html', $context)) {
-            $htmlBody = $twigTemplate->renderBlock('body_html', $context);
+        if ($template->hasBlock('body_html', $context)) {
+            $htmlBody = $template->renderBlock('body_html', $context);
         }
 
         $message = (new \Swift_Message())

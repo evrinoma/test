@@ -28,38 +28,26 @@ class UserManagerTest extends TestCase
 
     protected function setUp(): void
     {
-//        if (!interface_exists('Doctrine\ORM\EntityManagerInterface')) {
-//            $this->markTestSkipped('Doctrine Common has to be installed for this test to run.');
-//        }
+        if (!interface_exists('Doctrine\Common\Persistence\ObjectManager')) {
+            $this->markTestSkipped('Doctrine Common has to be installed for this test to run.');
+        }
 
         $passwordUpdater = $this->getMockBuilder('FOS\UserBundle\Util\PasswordUpdaterInterface')->getMock();
         $fieldsUpdater = $this->getMockBuilder('FOS\UserBundle\Util\CanonicalFieldsUpdater')
             ->disableOriginalConstructor()
             ->getMock();
-
-        $class = $this
-            ->getMockBuilder('Doctrine\Persistence\Mapping\ClassMetadata')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->om = $this
-            ->getMockBuilder('\Doctrine\ORM\EntityManagerInterface')
-            ->setMethods(['getRepository', 'getClassMetadata', 'remove', 'persist', 'flush'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->repository = $this->getMockBuilder('Doctrine\Persistence\ObjectRepository')->getMock();
+        $class = $this->getMockBuilder('Doctrine\Common\Persistence\Mapping\ClassMetadata')->getMock();
+        $this->om = $this->getMockBuilder('Doctrine\Common\Persistence\ObjectManager')->getMock();
+        $this->repository = $this->getMockBuilder('Doctrine\Common\Persistence\ObjectRepository')->getMock();
 
         $this->om->expects($this->any())
             ->method('getRepository')
             ->with($this->equalTo(static::USER_CLASS))
             ->will($this->returnValue($this->repository));
-
         $this->om->expects($this->any())
             ->method('getClassMetadata')
             ->with($this->equalTo(static::USER_CLASS))
             ->will($this->returnValue($class));
-
         $class->expects($this->any())
             ->method('getName')
             ->will($this->returnValue(static::USER_CLASS));

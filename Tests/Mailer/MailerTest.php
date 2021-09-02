@@ -35,6 +35,7 @@ class MailerTest extends TestCase
     public function testSendConfirmationEmailMessageWithBadEmails($emailAddress)
     {
         $this->expectException(\Swift_RfcComplianceException::class);
+
         $mailer = $this->getMailer();
         $mailer->sendConfirmationEmailMessage($this->getUser($emailAddress));
     }
@@ -56,6 +57,7 @@ class MailerTest extends TestCase
     public function testSendResettingEmailMessageWithBadEmails($emailAddress)
     {
         $this->expectException(\Swift_RfcComplianceException::class);
+
         $mailer = $this->getMailer();
         $mailer->sendResettingEmailMessage($this->getUser($emailAddress));
     }
@@ -87,6 +89,7 @@ class MailerTest extends TestCase
                 )
             ),
             $this->getMockBuilder('Symfony\Component\Routing\Generator\UrlGeneratorInterface')->getMock(),
+            $this->getTemplating(),
             [
                 'confirmation.template' => 'foo',
                 'resetting.template' => 'foo',
@@ -94,14 +97,13 @@ class MailerTest extends TestCase
                     'confirmation' => 'foo@example.com',
                     'resetting' => 'foo@example.com',
                 ],
-            ],
-            $this->getTemplating()
+            ]
         );
     }
 
     private function getTemplating()
     {
-        $templating = $this->getMockBuilder('FOS\UserBundle\Mailer\TemplateInterface')
+        $templating = $this->getMockBuilder('Symfony\Bundle\FrameworkBundle\Templating\EngineInterface')
             ->disableOriginalConstructor()
             ->getMock()
         ;

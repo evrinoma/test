@@ -12,26 +12,43 @@
 namespace FOS\UserBundle\Mailer;
 
 use FOS\UserBundle\Model\UserInterface;
+use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * @author Thibault Duplessis <thibault.duplessis@gmail.com>
  */
-class Mailer extends AbstractMailer
+class Mailer implements MailerInterface
 {
     /**
-     * @var TemplateInterface
+     * @var \Swift_Mailer
      */
-    protected $template;
+    protected $mailer;
 
     /**
-     * Mailer constructor.
+     * @var UrlGeneratorInterface
      */
-    public function __construct(\Swift_Mailer $mailer, UrlGeneratorInterface $router, array $parameters, TemplateInterface $template)
-    {
-        $this->template = $template;
+    protected $router;
 
-        parent::__construct($mailer, $router, $parameters);
+    /**
+     * @var EngineInterface
+     */
+    protected $templating;
+
+    /**
+     * @var array
+     */
+    protected $parameters;
+
+    /**
+     * @param \Swift_Mailer $mailer
+     */
+    public function __construct($mailer, UrlGeneratorInterface $router, EngineInterface $templating, array $parameters)
+    {
+        $this->mailer = $mailer;
+        $this->router = $router;
+        $this->templating = $templating;
+        $this->parameters = $parameters;
     }
 
     /**
@@ -41,11 +58,11 @@ class Mailer extends AbstractMailer
     {
         $template = $this->parameters['confirmation.template'];
         $url = $this->router->generate('fos_user_registration_confirm', ['token' => $user->getConfirmationToken()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $rendered = $this->template->render($template, [
+        $rendered = $this->templating->render($template, [
             'user' => $user,
             'confirmationUrl' => $url,
         ]);
-        $this->sendMessage($this->parameters['from_email']['confirmation'], (string) $user->getEmail(), $rendered);
+        $this->sendEmailMessage($rendered, $this->parameters['from_email']['confirmation'], (string) $user->getEmail());
     }
 
     /**
@@ -55,20 +72,22 @@ class Mailer extends AbstractMailer
     {
         $template = $this->parameters['resetting.template'];
         $url = $this->router->generate('fos_user_resetting_reset', ['token' => $user->getConfirmationToken()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $rendered = $this->template->render($template, [
+        $rendered = $this->templating->render($template, [
             'user' => $user,
             'confirmationUrl' => $url,
         ]);
-        $this->sendMessage($this->parameters['from_email']['resetting'], (string) $user->getEmail(), $rendered);
+        $this->sendEmailMessage($rendered, $this->parameters['from_email']['resetting'], (string) $user->getEmail());
     }
 
     /**
-     * {@inheritDoc}
+     * @param string       $renderedTemplate
+     * @param array|string $fromEmail
+     * @param array|string $toEmail
      */
-    protected function sendMessage($fromEmail, $toEmail, $template, $context = [])
+    protected function sendEmailMessage($renderedTemplate, $fromEmail, $toEmail)
     {
         // Render the email, use the first line as the subject, and the rest as the body
-        $renderedLines = explode("\n", trim($template));
+        $renderedLines = explode("\n", trim($renderedTemplate));
         $subject = array_shift($renderedLines);
         $body = implode("\n", $renderedLines);
 

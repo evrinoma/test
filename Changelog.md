@@ -1,22 +1,35 @@
 Changelog
 =========
 
-### 2.2.0 (2020-01-xx)
-=======
+### 3.0.0 (unreleased)
 
+* [BC break] Change the base class of controllers to use the `AbstractController` (but extending the controllers is not officially supported anymore).
+* [BC break] Remove the group feature
+* [BC break] Change the base class for events to `Symfony\Contracts\EventDispatcher\Event` instead of `Symfony\Component\EventDispatcher\Event`
+* [BC break] Remove the `Symfony\Component\Security\Core\User\AdvancedUserInterface` methods from our `UserInterface`
+* [BC break] Made `\FOS\UserBundle\Model\User::serialize` and `\FOS\UserBundle\Model\User::unserialize` final. Child classes needing to extend the serialization must override `__serialize` and `__unserialize` instead.
+* Add support for Symfony 5.
+
+### 2.2.0 (2021-08-26)
+
+* Deprecated the Groups feature.
 * Marked all controllers final.
+* Marked internal classes as such.
 * Added Mongolian translation.
 * Added an email provider.
 * Added a custom user checker.
-* Added PHP 7.3 support.
+* Added PHP 7.4 and PHP 8.0 support.
 * Removed fieldName attribute in MongoDB mapping.
 * Registration confirmation now redirects to login page if token is invalid.
 * User model will not rely on `AdvancedUserInterface` anymore.
 * Self-salting password encoders will not create a salt anymore.
 * FlashListener constructor now accepts `SessionInterface`.
-* Fixed `UserManagerInterface::updateUser` signature.
 * Fixed several Symfony deprecation notices.
 * Fixed several translations.
+* Bumped the min PHP version to 7.1.3.
+* Bumped the min Symfony version to 4.4.
+* Added compatibility with Twig 3.
+* Added compatibility with doctrine/persistence 2.
 
 ### 2.1.2 (2018-03-08)
 
